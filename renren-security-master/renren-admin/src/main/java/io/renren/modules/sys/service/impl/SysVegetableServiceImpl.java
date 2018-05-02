@@ -46,6 +46,11 @@ public class SysVegetableServiceImpl extends ServiceImpl<SysVegetableDao, SysVeg
 	}
 
 	@Override
+	public List<SysVegetableEntity> queryByArea(String area) {
+		return this.baseMapper.queryByArea(area);
+	}
+
+	@Override
 	public List<SysVegetableEntity> queryByCondition(String name, String beginTime, String endTime, String area) {
 		
 		return baseMapper.queryByCondition(name, beginTime, endTime, area);

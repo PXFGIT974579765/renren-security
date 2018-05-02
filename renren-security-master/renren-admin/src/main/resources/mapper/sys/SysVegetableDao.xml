@@ -22,6 +22,13 @@
 		</if>
 		order by time ASC;
 	</select>
+	<select id="queryByArea" resultType="SysVegetableEntity">
+		select * from sys_vegetable where  time = (select max(time) from sys_vegetable)
+		<if test="area != null and area !='' ">
+			and area = #{area}
+		</if>
+		order by time ASC;
+	</select>
 
 	<select id="getItem" resultType="String">
 		SELECT distinct(name) FROM sys_vegetable 

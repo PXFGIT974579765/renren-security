@@ -1,12 +1,10 @@
 package io.renren.modules.sys.dao;
 
-import java.util.List;
-
+import com.baomidou.mybatisplus.mapper.BaseMapper;
+import io.renren.modules.sys.entity.SysVegetableEntity;
 import org.apache.ibatis.annotations.Param;
 
-import com.baomidou.mybatisplus.mapper.BaseMapper;
-
-import io.renren.modules.sys.entity.SysVegetableEntity;
+import java.util.List;
 
 
 /**
@@ -33,7 +31,13 @@ public interface SysVegetableDao extends BaseMapper<SysVegetableEntity>{
 	 * @return
 	 */
 	List<SysVegetableEntity> queryByNameTime(@Param("name") String name,@Param("beginTime") String beginTime,@Param("endTime") String endTime);
-	
+	/**
+	 * 按区域查询最新时间所有蔬菜数据
+	 * @param area
+	 * @return
+	 */
+	List<SysVegetableEntity> queryByArea(@Param("area") String area);
+
 	/**
 	 * 根据条件查询
 	 * @param name

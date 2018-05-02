@@ -1,11 +1,10 @@
 package io.renren.modules.sys.service;
 
+import com.baomidou.mybatisplus.service.IService;
+import io.renren.modules.sys.entity.SysVegetableEntity;
+
 import java.util.List;
 import java.util.Map;
-
-import com.baomidou.mybatisplus.service.IService;
-
-import io.renren.modules.sys.entity.SysVegetableEntity;
 
 /**
  * 蔬菜
@@ -30,6 +29,8 @@ public interface SysVegetableService extends IService<SysVegetableEntity>{
 	List<SysVegetableEntity> queryByNameTime(String name, String beginTime, String endTime);
 	
 	List<SysVegetableEntity> queryByCondition(Map<String,Object> map);
+
+	List<SysVegetableEntity> queryByArea(String area);
 	
 	List<SysVegetableEntity> queryByCondition(String name, String beginTime, String endTime, String area);
 

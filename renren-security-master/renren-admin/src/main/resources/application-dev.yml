@@ -8,9 +8,9 @@ spring:
               #  username: root
                # password: 123456
             first:  #数据源1
-                url: jdbc:mysql://172.10.10.167:3306/vegetablebigdata?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
-                username: cetc
-                password: cetc2018
+                url: jdbc:mysql://localhost:3306/vegetablebigdata?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+                username: renren
+                password: 123456
             second:  #数据源2
                 url: jdbc:mysql://139.224.118.191:3306/vegetableBigData?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
                 username: renren

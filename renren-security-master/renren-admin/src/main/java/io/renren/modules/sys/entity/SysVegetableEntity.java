@@ -1,10 +1,10 @@
 package io.renren.modules.sys.entity;
 
-import java.io.Serializable;
-
+import com.baomidou.mybatisplus.annotations.TableId;
+import com.baomidou.mybatisplus.annotations.TableName;
 import org.springframework.data.annotation.Transient;
 
-import com.baomidou.mybatisplus.annotations.*;
+import java.io.Serializable;
 
 /**
  * 蔬菜实体
@@ -37,6 +37,30 @@ public class SysVegetableEntity implements Serializable {
 	 * 最低价格
 	 */
 	private double lPrice;
+	/**
+	 * 前三天最低价格平均值
+	 */
+	private double threeAgoLPrice;
+	/**
+	 * 前三天最高价格平均值
+	 */
+	private double threeAgoHPrice;
+
+	public double getThreeAgoLPrice() {
+		return threeAgoLPrice;
+	}
+
+	public void setThreeAgoLPrice(double threeAgoLPrice) {
+		this.threeAgoLPrice = threeAgoLPrice;
+	}
+
+	public double getThreeAgoHPrice() {
+		return threeAgoHPrice;
+	}
+
+	public void setThreeAgoHPrice(double threeAgoHPrice) {
+		this.threeAgoHPrice = threeAgoHPrice;
+	}
 
 	/**
 	 * 蔬菜种类

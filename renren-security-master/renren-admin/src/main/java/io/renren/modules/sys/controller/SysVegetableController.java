@@ -1,26 +1,18 @@
 package io.renren.modules.sys.controller;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import io.renren.common.annotation.SysLog;
 import io.renren.common.utils.R;
 import io.renren.modules.sys.entity.SysVegetableEntity;
 import io.renren.modules.sys.entity.SysVegetablePreEntity;
 import io.renren.modules.sys.service.SysVegetablePreService;
 import io.renren.modules.sys.service.SysVegetableService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * 蔬菜信息控制器
@@ -118,6 +110,18 @@ public class SysVegetableController extends AbstractController {
 	}
 
 	/**
+	 * 按区域查询最新时间所有蔬菜数据
+	 * pxf 2018/05/02  13:18
+	 */
+	@SysLog("按区域查询最新时间所有蔬菜数据")
+	@RequestMapping("/listbyarea")
+	public List<SysVegetableEntity> listByArea(@RequestParam String area) {
+		System.out.println("area ::  " + area);
+		List<SysVegetableEntity> veList = sysVegetableService.queryByArea(area);
+		return veList;
+	}
+
+	/**
 	 * 所有蔬菜列表
 	 */
 	@SysLog("获取蔬菜种类列表")
@@ -136,6 +140,7 @@ public class SysVegetableController extends AbstractController {
 		List<String> items = sysVegetableService.getAreas();
 		return items;
 	}
+
 
 	/**
 	 * 所有蔬菜均价趋势排名
