@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html style="height: 100%">
+<head>
+
+<#include "/header.html">
+<link rel="stylesheet"
+	href="${request.contextPath}/statics/css/gongzuozhan_style.css">
+</head>
+<body style="height: 100%; margin: 0">
+    <div class="row" style="height: 100%; margin: 0">
+	<div class="col-md-6" id="container" style="height: 100%; "></div>
+	<div class="col-md-6" id="container1" style="height: 50%;"></div>
+	<div class="col-md-6" id="container2" style="height: 50%;"></div>
+	</div>
+	<input type=hidden id="webarea" name="webarea" value="${area}"/>
+	<input type=hidden id="webdays" name="webdays" value="${days}"/>
+	<script
+		src="${request.contextPath}/statics/js/modules/echart/echarts.js"></script>
+	<script src="${request.contextPath}/statics/libs/daterangepicker.js"></script>
+	<script src="${request.contextPath}/statics/libs/moment.js"></script>
+<!-- 生成日期数组作为坐标X轴 -->
+<script>
+var days = $("#webdays").val();
+var area = $("#webarea").val();
+var now = new Date(); // 这个算法能自动处理闰年和非闰年。2012年是闰年，所以2月有29号
+var stime = [];
+var i = 0;
+while (i < days) {
+    
+    stime.unshift( now.getFullYear() + '-' +  fillZero((now.getMonth()+1)) + '-' +  fillZero(now.getDate()));
+    now = new Date(now - 24 * 60 * 60 * 1000); // 这个是关键！！！减去一天的毫秒数效果就是把日期往前推一天
+    i++;
+   
+}
+
+function fillZero(s){
+	//console.log(s);
+	if(s < 10)
+		s = '0'+s
+	return s;
+}
+</script>
+
+<!-- 正负交叉图 -->
+	<script type="text/javascript">
+	    
+		var dom = document.getElementById("container");
+		var myChart = echarts.init(dom);
+		var app = {};
+		option = null;
+		var labelRight = {
+			normal : {
+				position : 'right'
+			}
+		};
+		function draw(){
+		option = {
+			title : {
+				text : '近期蔬菜波动趋势',
+				
+				
+			},
+			tooltip : {
+				trigger : 'axis',
+				axisPointer : { // 坐标轴指示器，坐标轴触发有效
+					type : 'shadow' // 默认为直线，可选为：'line' | 'shadow'
+				}
+			},
+			grid : {
+				top : 80,
+				bottom : 30
+			},
+			xAxis : {
+				type : 'value',
+				position : 'top',
+				splitLine : {
+					lineStyle : {
+						type : 'dashed'
+					}
+				},
+			},
+			yAxis : {
+				type : 'category',
+				axisLine : {
+					show : false
+				},
+				axisLabel : {
+					show : false
+				},
+				axisTick : {
+					show : false
+				},
+				splitLine : {
+					show : false
+				},
+				data : [ 'ten', 'nine', 'eight', 'seven', 'six', 'five',
+						'four', 'three', 'two', 'one' ]
+			},
+			series : [ {
+				name : '生活费',
+				type : 'bar',
+				stack : '总量',
+				label : {
+					normal : {
+						show : true,
+						formatter : '{b}'
+					}
+				},
+				data : [ {
+					value : -0.07,
+					label : labelRight
+				}, {
+					value : -0.09,
+					label : labelRight
+				}, 0.2, 0.44, {
+					value : -0.23,
+					label : labelRight
+				}, 0.08, {
+					value : -0.17,
+					label : labelRight
+				}, 0.47, {
+					value : -0.36,
+					label : labelRight
+				}, 0.18 ]
+			} ]
+		};
+		;
+		if (option && typeof option === "object") {
+			myChart.setOption(option, true);
+		}
+		}
+		
+		draw();
+	</script>
+<!-- 近期最高价上涨趋势最大的五种蔬菜  -->
+	<script type="text/javascript">
+	   
+		var dom1 = document.getElementById("container1");
+		var myChart1 = echarts.init(dom1);
+		var app1 = {};
+		option1 = null;
+		var data1;//蔬菜趋势排名
+		var vedata1;//蔬菜数组数据
+		var name1;
+		$.get("sys/vegetable/tendencyhpricelist?days="+days+"&area="+area,
+			      
+				function(r) {
+					data1=r;
+					name1 = splitNameData(data1);
+					
+					draw1();
+				});
+		
+		function splitNameData(raw){
+			var name = [];
+			for( var i=0;i<5;i++){
+				var n = raw[i][0].name;
+				name.push(n);
+			}
+			return name;
+		}
+		function splitPriceData(key){
+			var result = [];
+			i = 0;
+			j = 0;
+			
+			for( i=0; i<stime.length,j<data1[key].length; i++ ){
+				
+				if(data1[key][j].time = stime[i]){
+					result.push(data1[key][j].hPrice);
+					j++;
+					continue;
+				}else if(data1[key][j].time > stime[i]){
+					continue;
+				}
+				
+			}
+			return result;
+		}
+		
+		function draw1(){
+		option1 = {
+			title : {
+				text : '近期最高价上涨趋势\n最大的五种蔬菜'
+			},
+			tooltip : {
+				trigger : 'axis'
+			},
+			legend : {
+				data : name1,
+			},
+			grid : {
+				left : '3%',
+				right : '4%',
+				bottom : '3%',
+				containLabel : true
+			},
+			toolbox : {
+				feature : {
+					saveAsImage : {}
+				}
+			},
+			xAxis : {
+				type : 'category',
+				boundaryGap : false,
+				data : stime
+			},
+			yAxis : {
+				type : 'value'
+			},
+			dataZoom : [ {
+				type : 'inside',
+				start : 0,
+				end : 50
+			}, {
+				show : true,
+				type : 'slider',
+				y : '90%',
+				start : 50,
+				end : 100
+			} ],
+			series : [ {
+				name : name1[0],
+				type : 'line',
+				stack : '总量',
+				smooth : true,
+				data : splitPriceData(0)
+			}, {
+				name : name1[1],
+				type : 'line',
+				stack : '总量',
+				data : splitPriceData(1)
+			}, {
+				name : name1[2],
+				type : 'line',
+				stack : '总量',
+				data : splitPriceData(2)
+			}, {
+				name : name1[3],
+				type : 'line',
+				stack : '总量',
+				data : splitPriceData(3)
+			}, {
+				name : name1[4],
+				type : 'line',
+				stack : '总量',
+				data : splitPriceData(4)
+			} ]
+		};
+		;
+		if (option1 && typeof option1 === "object") {
+			myChart1.setOption(option1, true);
+		}
+		}
+		
+		</script>
+		
+<!-- 近期最低价下降趋势最大的五种蔬菜  -->		
+		<script type="text/javascript">
+		var dom2 = document.getElementById("container2");
+		var myChart2 = echarts.init(dom2);
+		var app2 = {};
+		option2 = null;
+		var data2;
+		var name2
+		$.get("sys/vegetable/tendencylpricelist?days="+days+"&area="+area,
+			      
+				function(r) {
+					data2=r;
+					name2 = splitNameData2(data2);
+					draw2();
+				});
+		function splitNameData2(raw){
+			var name = [];
+			for( var i=(raw.length-1);i>(raw.length-6)&&i>0;i--){
+				var n = raw[i][0].name;
+				name.push(n);
+			}
+			return name;
+		}
+		function splitPriceData2(key){
+			var result = [];
+			i = 0;
+			j = 0;
+			key=data2.length-1-key;
+			for( i=0; i<stime.length,j<data2[key].length; i++ ){
+				
+				if(data2[key][j].time = stime[i]){
+					result.push(data2[key][j].lPrice);
+					j++;
+					continue;
+				}else if(data2[key][j].time > stime[i]){
+					continue;
+				}
+				
+			}
+			return result;
+		}
+		function draw2(){
+		option2 = {
+			title : {
+				text : '近期最低价下降趋势\n最大的五种蔬菜'
+			},
+			tooltip : {
+				trigger : 'axis'
+			},
+			legend : {
+				data : name2
+			},
+			grid : {
+				left : '3%',
+				right : '4%',
+				bottom : '3%',
+				containLabel : true
+			},
+			toolbox : {
+				feature : {
+					saveAsImage : {}
+				}
+			},
+			dataZoom : [ {
+				type : 'inside',
+				start : 0,
+				end : 50
+			}, {
+				show : true,
+				type : 'slider',
+				y : '90%',
+				start : 50,
+				end : 100
+			} ],
+			xAxis : {
+				type : 'category',
+				boundaryGap : false,
+				data : stime
+			},
+			yAxis : {
+				type : 'value'
+			},
+			series : [ {
+				name : name2[0],
+				type : 'line',
+				stack : '总量',
+				data : splitPriceData2(0)
+			}, {
+				name : name2[1],
+				type : 'line',
+				stack : '总量',
+				data : splitPriceData2(1)
+			}, {
+				name : name2[2],
+				type : 'line',
+				stack : '总量',
+				data : splitPriceData2(2)
+			}, {
+				name : name2[3],
+				type : 'line',
+				stack : '总量',
+				data : splitPriceData2(3)
+			}, {
+				name : name2[4],
+				type : 'line',
+				stack : '总量',
+				data : splitPriceData2(4)
+			} ]
+		};
+		;
+		if (option2 && typeof option2 === "object") {
+			myChart2.setOption(option2, true);
+		}
+		}
+		</script>
+		</body>
+		</html>
+	

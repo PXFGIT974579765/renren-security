@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="io.renren.modules.sys.dao.SysVegetableDao">
+
+	<select id="queryByType" resultType="SysVegetableEntity">
+		select * from sys_vegetable
+		where name = #{type} order by time DESC limit 1000
+	</select>
+
+	<select id="queryByNameTime" resultType="SysVegetableEntity">
+		select * from
+		sys_vegetable where name = #{name}
+		and time &lt; #{endTime} and time > #{beginTime}
+		order by time ASC;
+	</select>
+	<select id="queryByCondition" resultType="SysVegetableEntity">
+		select * from sys_vegetable where name = #{name}
+		and time &lt; #{endTime} and time > #{beginTime}
+		<if test="area != null and area !='' ">
+			and area = #{area}
+		</if>
+		order by time ASC;
+	</select>
+
+	<select id="getItem" resultType="String">
+		SELECT distinct(name) FROM sys_vegetable 
+		<if test="area != null and area !='' ">
+		where area=#{area};
+		</if>
+	</select>
+	<select id="getAreas" resultType="String">
+		SELECT distinct(area) FROM sys_vegetable;
+	</select>
+
+	<select id="getTendency" resultType="SysVegetableEntity">
+		SELECT * FROM vegetablebigdata.sys_vegetable
+		where time >= date_sub(curdate(),interval #{days} day)
+		and time &lt;= curdate() 
+		<if test="name != null and name !='' ">
+			and name = #{name}
+		</if>
+		<if test="area != null and area !='' ">
+			and area = #{area}
+		</if>
+        and not isnull(h_price) and not isnull(l_price)
+        order by time ASC;
+	</select>
+	
+	<select id="getPriceTendency" resultType="SysVegetableEntity">
+		SELECT name,area,max(h_price) as max_h_price,min(h_price) as min_h_price,
+       max(l_price) as max_l_price, min(l_price) as min_l_price,
+       max(ave_price) as max_ave_price, min(ave_price) as min_ave_price
+        FROM vegetablebigdata.sys_vegetable
+		where time >= date_sub(curdate(),interval #{days} day)
+		and time &lt;= curdate() 
+		<if test="name != null and name !='' ">
+			and name = #{name}
+		</if>
+		<if test="area != null and area !='' ">
+			and area = #{area}
+		</if>
+        and not isnull(h_price) and not isnull(l_price)
+        order by time ASC;
+	</select>
+</mapper>

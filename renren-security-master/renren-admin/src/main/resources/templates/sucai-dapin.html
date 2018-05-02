@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+
+<html style="height: 100%">
+
+
+<head>
+<meta charset="utf-8">
+<#include "/header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/css/gongzuozhan_style.css">
+<style>
+/* 背景图样式 */
+html, body { background: #000; margin: 0; padding:0;}
+canvas { width: 100%; height: 100%; position: absolute;z-index:0}
+
+/* Demo Buttons Style */
+.codrops-demos {
+	font-size: 0.8em;
+	text-align:left;
+	position:relative;
+	z-index:99;
+	width:100%;
+}
+
+.codrops-demos a {
+	display: inline-block;
+	margin: 0.35em 0.1em;
+	padding: 0.5em 1.2em;
+	outline: none;
+	text-decoration: none;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	font-weight: 700;
+	border-radius: 2px;
+	font-size: 110%;
+	border: 2px solid transparent;
+	color:#fff;
+}
+
+.codrops-demos a:hover,
+.codrops-demos a.current-demo {
+	border-color:  #0080ff;
+}
+</style>
+</head>
+<body style="height: 100%; margin: 0">
+<canvas width="100%" height="100%"></canvas>
+<nav class="codrops-demos">
+	
+	     <div >
+			<div class="form-group col-sm-2">
+				<select class="form-control" name="vename" id="vename"
+					 ></select>
+			</div>
+			<div class="form-group col-sm-2">
+				<select class="form-control" name="vearea" id="vearea"
+					 ></select>
+			</div>
+			<div class="form-group col-sm-2">
+				<input type="text" id="datepicker" class="form-control"> <i
+					class="glyphicon glyphicon-calendar fa fa-calendar"></i>
+			</div>
+			<div class="form-group col-sm-2">
+			<button class="btn btn-default" onclick="query()" >查询</button>
+			</div>
+
+
+		</div>
+	<input type=hidden id="webname" name="webname" value="${name}"/>
+	<input type=hidden id="webarea" name="webarea" value="${area}"/>
+</nav>
+	
+	
+	<!-- K线图 -->
+	<div class="topcn" id="container" style="height: 100%;">
+	</div>
+	<script
+		src="${request.contextPath}/statics/js/modules/echart/echarts-gl.js"></script>
+	<script
+		src="${request.contextPath}/statics/js/modules/echart/echarts.js"></script>
+	<script src="${request.contextPath}/statics/libs/daterangepicker.js"></script>
+	<script src="${request.contextPath}/statics/libs/moment.js"></script>
+	
+	<!-- <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/echarts.min.js"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts-gl/echarts-gl.min.js"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts-stat/ecStat.min.js"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/extension/dataTool.min.js"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/china.js"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/world.js"></script>
+       <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=ZUONbpqGBsYGXNIYHicvbAbM"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/extension/bmap.min.js"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/simplex.js"></script> -->
+	<script type="text/javascript">
+		var dom = document.getElementById("container");
+		var myChart = echarts.init(dom);
+		var app = {};
+		option = null;
+		var upColor = '#00da3c';
+		var upBorderColor = '#008F28';
+		var downColor = '#ec0000';
+		var downBorderColor = '#8A0000';
+
+		var name = $("#vename").val();
+		var area = $("#vearea").val();
+		var data0;
+		var data1;
+		var myDate = new Date();
+		var month=myDate.getMonth()+1;
+		var endDate = myDate.getFullYear() + '-' + month + "-" + myDate.getDate();
+		
+		myDate.setMonth(month - 12);
+		var startDate = myDate.getFullYear() + '-' + myDate.getMonth()+ "-" + myDate.getDate();
+		$("select[name=vearea]").empty();
+		
+		$("select[name=vearea]").change( function() {
+			area = $("#vearea").val();
+			updateItems();
+		});
+		
+		$("select[name=vename]").change( function() {
+			name = $("#vename").val();
+			query();
+		});
+		
+		$.ajax({
+			url:"sys/vegetable/arealist",
+			type:"post",
+			dataType:"json",
+			contentType: "application/json",  
+            traditional: true,  
+            success: function (data) { 
+            	 var optionstring ="";
+                for (var i = 0; i < data.length;i++) {
+                   optionstring += "<option value=\"" + data[i] + "\" >" + data[i] + "</option>";
+                   
+                }  
+                
+                $("select[name=vearea]").append(optionstring);
+               
+                area = $("#webarea").val();
+                $("select[name=vearea]").val(area);
+                updateItems();
+            },  
+            error: function (msg) {  
+                alert("出错了！");  
+            }  
+		});
+		
+		
+		 $("#datepicker").daterangepicker(
+				{
+					"showDropdowns" : true,
+					"locale" : {
+
+						"format" : "YYYY-MM-DD",
+						"separator" : " - ",
+						"applyLabel" : "确定",
+						"cancelLabel" : "取消",
+						"fromLabel" : "从",
+						"toLabel" : "到",
+						"customRangeLabel" : "自定义",
+						"daysOfWeek" : [ "星期日", "星期一", "星期二", "星期三", "星期四",
+								"星期五", "星期六" ],
+						"monthNames" : [ "一月", "二月", "三月", "四月", "五月", "六月",
+								"七月", "八月", "九月", "十月", "十一月", "十二月" ],
+						"firstDay" : 1
+					},
+					"startDate": startDate,
+				    "endDate": endDate
+
+				},
+				
+				function(start, end, label) {
+					startDate = start.format('YYYY-MM-DD');
+					endDate = end.format('YYYY-MM-DD');
+					console.log('New date range selected: '
+							+ start.format('YYYY-MM-DD') + ' to '
+							+ end.format('YYYY-MM-DD') + ' (predefined range: '
+							+ label + ')');
+					query();
+				});
+		function query() {
+			console.log(name+"   "+area);
+			initdata();
+		} 
+		
+		function initdata(){
+			$.get("sys/vegetable/listbycondition?name="+name+"&area="+area+"&beginTime="+startDate+"&endTime="+endDate,
+		      
+				function(r) {
+					data0 = splitData2(r);
+					$.get("sys/vegetable/pre", function(r) {
+						data1 = r;
+
+						draw();
+					})
+				})
+		 };
+		function splitData2(rawData) {
+			var categoryData = [];
+			var values = [];
+			var hprice = [];
+			var lprice = [];
+			var hpreprice = [];
+			var lpreprice = [];
+
+			categoryData.push(rawData[0].time);
+			values.push([ rawData[0].hPrice, rawData[0].hPrice,
+					rawData[0].hPrice, rawData[0].hPrice ]);
+			hprice.push([ rawData[0].hPrice, rawData[0].hPrice,
+					rawData[0].hPrice, rawData[0].hPrice ]);
+			lprice.push([ rawData[0].lPrice, rawData[0].lPrice,
+					rawData[0].lPrice, rawData[0].lPrice ]);
+
+			if (rawData[0].predicHPrice == '' || rawData[0].predicHPrice == 0.0) {
+				hpreprice.push('-');
+			} else {
+				hpreprice.push(rawData[0].predicHPrice);
+			}
+			if (rawData[0].predicLPrice == '' || rawData[0].predicLPrice == 0.0) {
+				lpreprice.push('-');
+			} else {
+				lpreprice.push(rawData[0].predicLPrice);
+			}
+
+			for (var i = 1; i < rawData.length; i++) {
+				categoryData.push(rawData[i].time);
+				values.push([ rawData[i].hPrice, rawData[i - 1].hPrice,
+						rawData[i].hPrice, rawData[i - 1].hPrice ])
+				hprice.push([ rawData[i].hPrice, rawData[i - 1].hPrice,
+						rawData[i].hPrice, rawData[i - 1].hPrice ]);
+				lprice.push([ rawData[i].lPrice, rawData[i - 1].lPrice,
+						rawData[i].lPrice, rawData[i - 1].lPrice ]);
+				if (rawData[i].predicHPrice == ''
+						|| rawData[i].predicHPrice == 0.0) {
+					hpreprice.push('-');
+				} else {
+					hpreprice.push(rawData[i].predicHPrice);
+				}
+				if (rawData[i].predicLPrice == ''
+						|| rawData[i].predicLPrice == 0.0) {
+					lpreprice.push('-');
+				} else {
+					lpreprice.push(rawData[i].predicLPrice);
+				}
+			}
+			return {
+				categoryData : categoryData,
+				values : values,
+				hprice : hprice,
+				lprice : lprice,
+				hpreprice : hpreprice,
+				lpreprice : lpreprice
+			};
+		}
+
+		// 数据意义：开盘(open)，收盘(close)，最低(lowest)，最高(highest)
+		/* var data0 = splitData([
+		   ['2013/1/24', 2320.26,2320.26,2287.3,2362.94],
+		   ['2013/1/25', 2300,2291.3,2288.26,2308.38],
+		   ['2013/1/28', 2295.35,2346.5,2295.35,2346.92],
+
+		]);  */
+
+		function splitHistoryData(rdata) {
+			var result = [];
+			for (var i = 0, len = rdata.length; i < len; i++) {
+				result.push(rdata[i][0]);
+			}
+			return result;
+		}
+
+		function splitPredictionData() {
+			var result = [];
+			for (var i = 0, len = data1.length; i < len; i++) {
+				result.push(9.9);
+			}
+			return result;
+		}
+
+		function draw() {
+			var option = {
+				/* backgroundColor: '#142058', */
+				
+				title : {
+					text : name+'价格态势波动',
+					left : 0,
+					 textStyle: {
+				            fontWeight: 'normal',
+				            fontSize: 36,
+				            color: '#ffff',
+				        }
+				},
+				tooltip : {
+					trigger : 'axis',
+					axisPointer : {
+						type : 'cross'
+					}
+				},
+				legend : {
+					data : [ '日最高价格波动', '日最低价格波动', '最高价格', '预测最高价格', '最低价格',
+							'预测最低价格' ],
+				 textStyle: {
+					    fontSize: 20,
+		                color: '#ffffff',
+		            }
+				},
+				grid : {
+					left : '10%',
+					right : '10%',
+					bottom : '15%'
+				},
+				xAxis : {
+					type : 'category',
+					data : data0.categoryData,
+					scale : true,
+					boundaryGap : false,
+					axisLine : {
+						onZero : false
+					},
+					axisLabel: {
+			            textStyle: {
+			                color: '#ffffff',
+			                fontSize: 16,
+			            }
+			        },
+					splitLine : {
+						show : false
+					},
+					splitNumber : 20,
+					min : 'dataMin',
+					max : 'dataMax',
+					
+				},
+				yAxis : {
+					scale : true,
+					splitArea : {
+						show : true
+					},
+					axisLabel: {
+			            textStyle: {
+			                color: '#ffffff',
+			                fontSize: 16,
+			            }
+			        },
+				
+				},
+				dataZoom : [ {
+					type : 'inside',
+					start : 50,
+					end : 100
+				}, {
+					show : true,
+					type : 'slider',
+					y : '90%',
+					start : 50,
+					end : 100
+				} ],
+				series : [
+						{
+							name : '日最高价格波动',
+							type : 'candlestick',
+							data : data0.hprice,
+							itemStyle : {
+								normal : {
+									color : upColor,
+									color0 : downColor,
+									borderColor : upBorderColor,
+									borderColor0 : downBorderColor
+								}
+							},
+							markPoint : {
+								label : {
+									normal : {
+										formatter : function(param) {
+											return param != null ? Math
+													.round(param.value) : '';
+										}
+									}
+								},
+								data : [ {
+									name : 'XX标点',
+									coord : [ '2013/5/31', 2300 ],
+									value : 2300,
+									itemStyle : {
+										normal : {
+											color : 'rgb(41,60,85)'
+										}
+									}
+								}, {
+									name : 'highest value',
+									type : 'max',
+									valueDim : 'highest'
+								}, {
+									name : 'lowest value',
+									type : 'min',
+									valueDim : 'lowest'
+								}, {
+									name : 'average value on close',
+									type : 'average',
+									valueDim : 'close'
+								} ],
+								tooltip : {
+									formatter : function(param) {
+										return param.name + '<br>'
+												+ (param.data.coord || '');
+									}
+								}
+							},
+							markLine : {
+								symbol : [ 'none', 'none' ],
+								data : [ [ {
+									name : 'from lowest to highest',
+									type : 'min',
+									valueDim : 'lowest',
+									symbol : 'circle',
+									symbolSize : 10,
+									label : {
+										normal : {
+											show : false
+										},
+										emphasis : {
+											show : false
+										}
+									}
+								}, {
+									type : 'max',
+									valueDim : 'highest',
+									symbol : 'circle',
+									symbolSize : 10,
+									label : {
+										normal : {
+											show : false
+										},
+										emphasis : {
+											show : false
+										}
+									}
+								} ], {
+									name : 'min line on close',
+									type : 'min',
+									valueDim : 'close'
+								}, {
+									name : 'max line on close',
+									type : 'max',
+									valueDim : 'close'
+								} ]
+							}
+						},
+						{
+							name : '日最低价格波动',
+							type : 'candlestick',
+							data : data0.lprice,
+							itemStyle : {
+								normal : {
+									color : '#de8d8c',
+									color0 : '#00f0f1',
+									borderColor : '#de8d8c',
+									borderColor0 : '#00f0f1'
+								}
+							},
+							markPoint : {
+								label : {
+									normal : {
+										formatter : function(param) {
+											return param != null ? Math
+													.round(param.value) : '';
+										}
+									}
+								},
+								data : [ {
+									name : 'XX标点',
+									coord : [ '2013/5/31', 2300 ],
+									value : 2300,
+									itemStyle : {
+										normal : {
+											color : 'rgb(41,60,85)'
+										}
+									}
+								}, {
+									name : 'highest value',
+									type : 'max',
+									valueDim : 'highest'
+								}, {
+									name : 'lowest value',
+									type : 'min',
+									valueDim : 'lowest'
+								}, {
+									name : 'average value on close',
+									type : 'average',
+									valueDim : 'close'
+								} ],
+								tooltip : {
+									formatter : function(param) {
+										return param.name + '<br>'
+												+ (param.data.coord || '');
+									}
+								}
+							},
+							markLine : {
+								symbol : [ 'none', 'none' ],
+								data : [ [ {
+									name : 'from lowest to highest',
+									type : 'min',
+									valueDim : 'lowest',
+									symbol : 'circle',
+									symbolSize : 10,
+									label : {
+										normal : {
+											show : false
+										},
+										emphasis : {
+											show : false
+										}
+									}
+								}, {
+									type : 'max',
+									valueDim : 'highest',
+									symbol : 'circle',
+									symbolSize : 10,
+									label : {
+										normal : {
+											show : false
+										},
+										emphasis : {
+											show : false
+										}
+									}
+								} ], {
+									name : 'min line on close',
+									type : 'min',
+									valueDim : 'close'
+								}, {
+									name : 'max line on close',
+									type : 'max',
+									valueDim : 'close'
+								} ]
+							}
+						}, {
+							name : '最高价格',
+							type : 'line',
+							data : splitHistoryData(data0.hprice),
+							smooth : true,
+							lineStyle : {
+								normal : {
+									opacity : 1
+								}
+							}
+						}, {
+							name : '预测最高价格',
+							type : 'line',
+							data : data0.hpreprice,
+							smooth : true,
+							lineStyle : {
+								normal : {
+									opacity : 1
+								}
+							}
+						}, {
+							name : '最低价格',
+							type : 'line',
+							data : splitHistoryData(data0.lprice),
+							smooth : true,
+							lineStyle : {
+								normal : {
+									opacity : 1
+								}
+							}
+						}, {
+							name : '预测最低价格',
+							type : 'line',
+							data : splitPredictionData(),
+							smooth : true,
+							lineStyle : {
+								normal : {
+									opacity : 1
+								}
+							}
+						},
+
+				]
+			};
+
+			;
+			if (option && typeof option === "object") {
+				myChart.setOption(option, true);
+			}
+		}
+		//初始化蔬菜种类列表
+		function updateItems(){
+			$("select[name=vename]").empty();
+			$.ajax({
+				url:"sys/vegetable/itemlist?area="+area,
+				type:"post",
+				dataType:"json",
+				contentType: "application/json",  
+                traditional: true,  
+                success: function (data) { 
+                	 var optionstring ="";
+                	
+                    for (var i = 0; i < data.length;i++) {
+                       optionstring += "<option value=\"" + data[i] + "\" >" + data[i] + "</option>";
+                       
+                    }  
+                    
+                    $("select[name=vename]").append(optionstring);
+                   
+                    name = $("#webname").val();
+                    $("select[name=vename]").val(name);
+                  
+                    initdata();
+                },  
+                error: function (msg) {  
+                    alert("出错了！");  
+                }  
+			});
+			
+			
+		};
+		
+		
+	</script>
+	<!-- 画布绘画 -->
+	<script>
+$(function(){
+  var canvas = document.querySelector('canvas'),
+      ctx = canvas.getContext('2d')
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  ctx.lineWidth = .3;
+  ctx.strokeStyle = (new Color(150)).style;
+
+  var mousePosition = {
+    x: 30 * canvas.width / 100,
+    y: 30 * canvas.height / 100
+  };
+
+  var dots = {
+    nb: 750,
+    distance: 50,
+    d_radius: 100,
+    array: []
+  };
+
+  function colorValue(min) {
+    return Math.floor(Math.random() * 255 + min);
+  }
+  
+  function createColorStyle(r,g,b) {
+    return 'rgba(' + r + ',' + g + ',' + b + ', 0.8)';
+  }
+  
+  function mixComponents(comp1, weight1, comp2, weight2) {
+    return (comp1 * weight1 + comp2 * weight2) / (weight1 + weight2);
+  }
+  
+  function averageColorStyles(dot1, dot2) {
+    var color1 = dot1.color,
+        color2 = dot2.color;
+    
+    var r = mixComponents(color1.r, dot1.radius, color2.r, dot2.radius),
+        g = mixComponents(color1.g, dot1.radius, color2.g, dot2.radius),
+        b = mixComponents(color1.b, dot1.radius, color2.b, dot2.radius);
+    return createColorStyle(Math.floor(r), Math.floor(g), Math.floor(b));
+  }
+  
+  function Color(min) {
+    min = min || 0;
+    this.r = colorValue(min);
+    this.g = colorValue(min);
+    this.b = colorValue(min);
+    this.style = createColorStyle(this.r, this.g, this.b);
+  }
+
+  function Dot(){
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+
+    this.vx = -.5 + Math.random();
+    this.vy = -.5 + Math.random();
+
+    this.radius = Math.random() * 2;
+
+    this.color = new Color();
+  }
+
+  Dot.prototype = {
+    draw: function(){
+      ctx.beginPath();
+      ctx.fillStyle = this.color.style;
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+      ctx.fill();
+    }
+  };
+
+  function createDots(){
+    for(i = 0; i < dots.nb; i++){
+      dots.array.push(new Dot());
+    }
+  }
+
+  function moveDots() {
+    for(i = 0; i < dots.nb; i++){
+
+      var dot = dots.array[i];
+
+      if(dot.y < 0 || dot.y > canvas.height){
+        dot.vx = dot.vx;
+        dot.vy = - dot.vy;
+      }
+      else if(dot.x < 0 || dot.x > canvas.width){
+        dot.vx = - dot.vx;
+        dot.vy = dot.vy;
+      }
+      dot.x += dot.vx;
+      dot.y += dot.vy;
+    }
+  }
+
+  function connectDots() {
+    for(i = 0; i < dots.nb; i++){
+      for(j = 0; j < dots.nb; j++){
+        i_dot = dots.array[i];
+        j_dot = dots.array[j];
+
+        if((i_dot.x - j_dot.x) < dots.distance && (i_dot.y - j_dot.y) < dots.distance && (i_dot.x - j_dot.x) > - dots.distance && (i_dot.y - j_dot.y) > - dots.distance){
+          if((i_dot.x - mousePosition.x) < dots.d_radius && (i_dot.y - mousePosition.y) < dots.d_radius && (i_dot.x - mousePosition.x) > - dots.d_radius && (i_dot.y - mousePosition.y) > - dots.d_radius){
+            ctx.beginPath();
+            ctx.strokeStyle = averageColorStyles(i_dot, j_dot);
+            ctx.moveTo(i_dot.x, i_dot.y);
+            ctx.lineTo(j_dot.x, j_dot.y);
+            ctx.stroke();
+            ctx.closePath();
+          }
+        }
+      }
+    }
+  }
+
+  function drawDots() {
+    for(i = 0; i < dots.nb; i++){
+      var dot = dots.array[i];
+      dot.draw();
+    }
+  }
+
+  function animateDots() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    moveDots();
+    connectDots();
+    drawDots();
+
+    requestAnimationFrame(animateDots);	
+  }
+
+  $('canvas').on('mousemove', function(e){
+    mousePosition.x = e.pageX;
+    mousePosition.y = e.pageY;
+  });
+
+  $('canvas').on('mouseleave', function(e){
+    mousePosition.x = canvas.width / 2;
+    mousePosition.y = canvas.height / 2;
+  });
+
+  createDots();
+  requestAnimationFrame(animateDots);	
+});
+</script>
+</body>
+</html>

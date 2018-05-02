@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>登陆</title>
+<link rel="stylesheet" type="text/css"
+	href="${request.contextPath}/statics/css/normalize.css" />
+<link rel="stylesheet" type="text/css"
+	href="${request.contextPath}/statics/css/demo.css" />
+<!--必要样式-->
+<link rel="stylesheet" type="text/css"
+	href="${request.contextPath}/statics/css/component.css" />
+<link rel="stylesheet"
+	href="${request.contextPath}/statics/css/font-awesome.min.css">
+
+<!-- AdminLTE Skins. Choose a skin from the css/skins
+       folder instead of downloading all of them to reduce the load. -->
+<link rel="stylesheet"
+	href="${request.contextPath}/statics/css/all-skins.min.css">
+<link rel="stylesheet"
+	href="${request.contextPath}/statics/css/main.css">
+<!--[if IE]>
+<script src="js/html5.js"></script>
+<![endif]-->
+</head>
+<body>
+	<div class="container demo-1">
+		<div class="content">
+			<div id="large-header" class="large-header">
+				<canvas id="demo-canvas"></canvas>
+				<div class="logo_box" style="top:30%;height:100px;width:1000px;left:40%;letter-spacing:20px">
+						<b style="color: #FFFFFF !important; font-size: 60px">农 投 大 数 据 系 统</b>
+					</div>
+				<div class="logo_box" id="rrapp" v-cloak>
+					<h3>欢  迎  您</h3>
+
+					<div class="input_outer">
+						<span class="u_user"></span> <input v-model="username"
+							class="text" style="color: #FFFFFF !important; font-size: 22px"
+							type="text" placeholder="请输入账户">
+					</div>
+					<div class="input_outer">
+						<span class="us_uer"></span> <input v-model="password"
+							class="text"
+							style="color: #FFFFFF !important; position: absolute; z-index: 100; font-size: 22px"
+							value="" type="password" placeholder="请输入密码">
+					</div>
+
+					<div class="input_outer">&nbsp;&nbsp;
+					<span class="fa fa-check-circle fa-2x"></span>
+						<input type="text" class="text" v-model="captcha"
+							style="color: #FFFFFF !important; font-size: 22px"
+							@keyup.enter="login" placeholder="验证码">
+					</div>
+
+					<img alt="如果看不清楚，请单击图片刷新！" class="pointer" :src="src"
+						@click="refreshCode">
+					<!-- <a href="javascript:;" @click="refreshCode" style="color: #FFFFFF">点击刷新</a> -->
+
+					<!-- <div class="mb2">
+							<a class="act-but submit" href="javascript:;"
+								style="color: #FFFFFF">登录</a>
+						</div> -->
+					<div class="mb2">
+						<div v-if="error" class="alert alert-danger alert-dismissible">
+							<h4 style="margin-bottom: 0px;">
+								<i class="fa fa-exclamation-triangle"></i> {{errorMsg}}
+							</h4>
+						</div>
+						<div class="checkbox icheck"></div>
+
+						<a type="button" class="act-but submit" style="color: #FFFFFF"
+							@click="login">登录</a>
+					</div>
+
+				</div>
+			</div>
+		</div>
+
+
+
+
+
+		<!-- /.social-auth-links -->
+	</div>
+	<!-- /container -->
+	<div style="text-align: center;"></div>
+
+
+	<script src="${request.contextPath}/statics/libs/jquery.min.js"></script>
+	<script src="${request.contextPath}/statics/libs/vue.min.js"></script>
+	<script src="${request.contextPath}/statics/libs/bootstrap.min.js"></script>
+	<script
+		src="${request.contextPath}/statics/libs/jquery.slimscroll.min.js"></script>
+	<script src="${request.contextPath}/statics/libs/fastclick.min.js"></script>
+	<script src="${request.contextPath}/statics/libs/app.js"></script>
+	<script src="${request.contextPath}/statics/js/TweenLite.min.js"></script>
+	<script src="${request.contextPath}/statics/js/EasePack.min.js"></script>
+	<script src="${request.contextPath}/statics/js/rAF.js"></script>
+	<script src="${request.contextPath}/statics/js/demo-1.js"></script>
+	<script type="text/javascript">
+		console.log("ok");
+		var vm = new Vue({
+			el : '#rrapp',
+			data : {
+				username : '',
+				password : '',
+				captcha : '',
+				error : false,
+				errorMsg : '',
+				src : 'captcha.jpg'
+			},
+			beforeCreate : function() {
+				if (self != top) {
+					top.location.href = self.location.href;
+				}
+			},
+			methods : {
+				refreshCode : function() {
+					console.log("refreshCode");
+					this.src = "captcha.jpg?t=" + $.now();
+				},
+				login : function(event) {
+					var data = "username=" + vm.username + "&password="
+							+ vm.password + "&captcha=" + vm.captcha;
+					$.ajax({
+						type : "POST",
+						url : "sys/login",
+						data : data,
+						dataType : "json",
+						success : function(result) {
+							if (result.code == 0) {//登录成功
+								parent.location.href = 'gongzuozhan';
+							} else {
+								vm.error = true;
+								vm.errorMsg = result.msg;
+
+								vm.refreshCode();
+							}
+						}
+					});
+				}
+			}
+		});
+	</script>
+</body>
+</html>
